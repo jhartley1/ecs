@@ -6,13 +6,24 @@ from ecs.exceptions import (
     NonexistentComponentTypeForEntity, DuplicateSystemTypeError,
     SystemAlreadyAddedToManagerError)
 from ecs.models import Entity
+from ecs.generators import SequentialGuidGenerator
 
 
 class EntityManager(object):
     """Provide database-like access to components based on an entity key."""
-    def __init__(self):
+    def __init__(self, guid_generator=None):
+        """
+        :param guid_generator: GuidGenerator to use. Uses SequentialGuidGenerator by default.
+        :type guid_generator: :class:`ecs.models.GuidGenerator`
+        """
+        if not guid_generator:
+            guid_generator=SequentialGuidGenerator()
+        self._guid_generator = guid_generator
         self._database = {}
-        self._next_guid = 0
+
+    @property
+    def guid_generator(self):
+        return self._guid_generator
 
     @property
     def database(self):
@@ -32,8 +43,7 @@ class EntityManager(object):
         :return: the new entity
         :rtype: :class:`ecs.models.Entity`
         """
-        entity = Entity(self._next_guid)
-        self._next_guid += 1
+        entity = Entity(self._guid_generator.next_guid())
         return entity
 
     def add_component(self, entity, component_instance):
